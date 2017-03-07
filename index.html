@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <title>Camera Test</title>
+  <style>
+    body {
+      font-family: Tahoma;
+      padding: 1rem 3rem;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      color: #888;
+      border: 1px solid black;
+      border-radius: 5px;
+      background-color: #ddd;
+      outline:none;
+    }
+    button:hover {
+      background-color: #eee;
+    }
+  </style>
+</head>
+<body>
+  <h1>Camera Pixelation</h1>
+  <hr />
+  <h4>demo of real-time video capture and pixelation</h4>
+  <div>
+    <video id="video" width="200" height="200" style="display:none" />
+  </div>
+  <div>
+    <canvas style="vertical-align:top" id="canvas" width="200" heigth="200">Canvas not supported</canvas>
+    <div style="display:inline-block; vertical-align: top;">
+      <canvas id="canvas2" width="200" heigth="200">Canvas not supported</canvas>
+      <br />
+      <input id="rangeBlockSize" style="width:100%" type="range" min="2" max="20" value="10" />
+    </div>
+    <div style="display:inline-block; vertical-align: top;">
+      <canvas id="canvas3" width="200" heigth="200">Canvas not supported</canvas>
+    </div>
+  </div>
+  <div style="clear:both">
+    <button type="button" id="btnStartVideo" onclick="startVideo()">Start Video</button>
+    <button type="button" id="btnStopVideo" onclick="stopVideo()">Stop Video</button>
+  </div>
+  <script type="text/javascript" src="./script.js"></script>
+</body>
+</html>
