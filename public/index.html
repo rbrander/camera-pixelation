@@ -2,10 +2,11 @@
 <html lang="en">
 <head>
   <title>Camera Test</title>
-  <style>
+  <style type="text/css">
     body {
       font-family: Tahoma;
-      padding: 1rem 3rem;
+      padding: 1rem;
+      margin: 0;
     }
     button {
       padding: 0.5rem 1rem;
@@ -18,27 +19,52 @@
     button:hover {
       background-color: #eee;
     }
+    .canvas-container {
+      display:inline-block;
+      vertical-align: top;
+    }
   </style>
+  <script type="text/javascript" src="./darkness.js"></script>
 </head>
 <body>
   <h1>Camera Pixelation</h1>
   <hr />
   <h4>demo of real-time video capture and pixelation</h4>
   <div>
-    <video id="video" width="200" height="200" style="display:none" />
+    <video id="video" width="0" height="0" style="display:none" />
   </div>
   <div>
-    <canvas style="vertical-align:top" id="canvas" width="200" heigth="200">Canvas not supported</canvas>
-    <div style="display:inline-block; vertical-align: top;">
-      <canvas id="canvas2" width="200" heigth="200">Canvas not supported</canvas>
-      <br />
-      <input id="rangeBlockSize" style="width:100%" type="range" min="2" max="20" value="10" />
+    <div class="canvas-container">
+      <canvas style="vertical-align:top;" id="canvas1" width="320" height="240">Canvas not supported</canvas>
+      <div>
+        <label for="chkDrawCanvas1">
+          Draw on this canvas
+          <input type="checkbox" id="chkDrawCanvas1" checked />
+        </label>
+      </div>
     </div>
-    <div style="display:inline-block; vertical-align: top;">
-      <canvas id="canvas3" width="200" heigth="200">Canvas not supported</canvas>
+    <div class="canvas-container">
+      <canvas id="canvas2" width="320" height="240">Canvas not supported</canvas>
+      <div>
+        <label for="chkDrawCanvas2">
+          Draw on this canvas
+          <input type="checkbox" id="chkDrawCanvas2" checked />
+        </label>
+        <br />
+        <input id="rangeBlockSize" style="width:100%" type="range" min="2" max="20" value="10" />
+      </div>
+    </div>
+    <div class="canvas-container">
+      <canvas id="canvas3" width="320" height="240">Canvas not supported</canvas>
+      <div>
+        <label for="chkDrawCanvas3">
+          Draw on this canvas
+          <input type="checkbox" id="chkDrawCanvas3" checked />
+        </label>
+      </div>
     </div>
   </div>
-  <div style="clear:both">
+  <div style="clear:both; margin: 10px 0">
     <button type="button" id="btnStartVideo" onclick="startVideo()">Start Video</button>
     <button type="button" id="btnStopVideo" onclick="stopVideo()">Stop Video</button>
   </div>

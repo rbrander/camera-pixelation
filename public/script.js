@@ -1,18 +1,31 @@
 const DECIMAL_RADIX = 10;
-const canvas = document.getElementById('canvas');
+// canvases
+const canvas1 = document.getElementById('canvas1');
 const canvas2 = document.getElementById('canvas2');
 const canvas3 = document.getElementById('canvas3');
-const ctx = canvas.getContext('2d');
+const ctx1 = canvas1.getContext('2d');
 const ctx2 = canvas2.getContext('2d');
 const ctx3 = canvas3.getContext('2d');
+const chkDrawCanvas1 = document.getElementById('chkDrawCanvas1');
+const chkDrawCanvas2 = document.getElementById('chkDrawCanvas2');
+const chkDrawCanvas3 = document.getElementById('chkDrawCanvas3');
+// other elements
 const video = document.getElementById('video');
 const rangeBlockSize = document.getElementById('rangeBlockSize');
+// buttons
 const btnStartVideo = document.getElementById('btnStartVideo');
 const btnStopVideo = document.getElementById('btnStopVideo');
+// darkness
+const darknessValues = Object.values(darknessCourier);
+const minDarkness = Math.min(...darknessValues);
+const maxDarkness = Math.max(...darknessValues);
+const darknessRange = maxDarkness - minDarkness;
+
 let mediaStream = null;
 let blockSize = 10;
 
 const getUserMediaMethod = () => (
+  (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) ||
   navigator.getUserMedia ||
   navigator.webkitGetUserMedia ||
   navigator.mozGetUserMedia ||
@@ -22,29 +35,34 @@ const hasGetUserMedia = () => !!getUserMediaMethod();
 
 // Canvas methods
 const update = (tick) => {};
-const draw = (tick) => {
+const draw = (tick, tickDiff) => {
+  const start = Date.now();
+
   // clear canvases
-  ctx.fillStyle = 'black';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  // NOTE: this may not be needed, takes about a third of a millisecond to run
+  ctx1.fillStyle = 'black';
+  ctx1.fillRect(0, 0, canvas1.width, canvas1.height);
   ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
   ctx3.clearRect(0, 0, canvas3.width, canvas3.height);
 
   // draw the video, if active
   if (!mediaStream) {
-    ctx.fillStyle = 'white';
-    ctx.font = '1.25rem Tahoma';
-    ctx.textBaseline = 'middle';
-    ctx.textAlign = 'center';
-    ctx.fillText('~ no video ~', canvas.width / 2, canvas.height / 2);
+    ctx1.fillStyle = 'white';
+    ctx1.font = '1.25rem Tahoma';
+    ctx1.textBaseline = 'middle';
+    ctx1.textAlign = 'center';
+    ctx1.fillText('~ no video ~', canvas1.width / 2, canvas1.height / 2);
   }
   if (mediaStream) {
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    // draw a copy of the current video frame on the first canvas
+    if (chkDrawCanvas1.checked) {
+      ctx1.drawImage(video, 0, 0, canvas1.width, canvas1.height);
+    }
+
     // draw interpolation
-
-
-    const imageWidth = canvas.width;
-    const imageHeight = canvas.height;
-    const imageData = ctx.getImageData(0, 0, imageWidth, imageHeight);
+    const imageWidth = canvas1.width;
+    const imageHeight = canvas1.height;
+    const imageData = ctx1.getImageData(0, 0, imageWidth, imageHeight);
     const data = imageData.data;
 
     const numXBlocks = Math.ceil(imageWidth / blockSize);
@@ -66,57 +84,76 @@ const draw = (tick) => {
             const blue = data[offset + 2];
             const alpha = data[offset + 3];
             const gray = ~~((red + green + blue) / 3);
-            // todo rgb getimagedata
             pixelGrayValues.push(gray);
           }
         }
         const avgGray = ~~(pixelGrayValues.reduce((avg, curr) => avg + curr) / pixelGrayValues.length);
-        ctx2.fillStyle = `rgb(${avgGray},${avgGray},${avgGray})`;
-        ctx2.fillRect(xOffset, yOffset, blockSizeX, blockSizeY);
+        if (chkDrawCanvas2.checked) {
+          ctx2.fillStyle = `rgb(${avgGray},${avgGray},${avgGray})`;
+          ctx2.fillRect(xOffset, yOffset, blockSizeX, blockSizeY);
+        }
 
-        // draw the letters
-        ctx3.fillStyle = 'black';
-        ctx3.font = blockSize+'px Courier';
-        ctx3.textBaseline = 'top';
+        if (chkDrawCanvas3.checked) {
+          // draw the letters
+          ctx3.fillStyle = 'black';
+          ctx3.font = blockSize+'px Courier';
+          ctx3.textBaseline = 'top';
 
-        // find the char with matching darkness
-        // const darkness = ~~(((255-avgGray) / 255) * 100);
-        const darknessValues = Object.values(darknessCourier);
-        const minDarkness = Math.min(...darknessValues);
-        const maxDarkness = Math.max(...darknessValues);
-        const darknessRange = maxDarkness - minDarkness;
-        const darkness = ~~(((255 - avgGray) / 255) * darknessRange) + minDarkness;
+          // find the char with matching darkness
+          const darkness = ~~(((255 - avgGray) / 255) * darknessRange) + minDarkness;
 
-        const foundKey = Object.keys(darknessCourier).reduce(
-          (result, letter) =>
-            (result ? result :
-              (darknessCourier[letter] === darkness ? letter : result)
-            )
-          , null);
-        if (foundKey) {
-          const charWidth = ctx3.measureText(foundKey).width;
-          const charXOffset = ~~((blockSize - charWidth + 1) / 2);
-          ctx3.fillText(foundKey, xOffset + charXOffset, yOffset);
-        } else {
-          ctx3.fillStyle = `rgb(${avgGray+128},${avgGray+128},${avgGray+128})`
-          ctx3.fillRect(xOffset, yOffset, blockSize, blockSize);
+          const foundKey = Object.keys(darknessCourier).reduce(
+            (result, letter) =>
+              (result ? result :
+                (darknessCourier[letter] === darkness ? letter : result)
+              )
+            , null);
+          if (foundKey) {
+            const charWidth = ctx3.measureText(foundKey).width;
+            const charXOffset = ~~((blockSize - charWidth + 1) / 2);
+            ctx3.fillText(foundKey, xOffset + charXOffset, yOffset);
+          } else {
+            ctx3.fillStyle = `rgb(${avgGray+128},${avgGray+128},${avgGray+128})`
+            ctx3.fillRect(xOffset, yOffset, blockSize, blockSize);
+          }
         }
       }
     }
 
+    // display times
+    ctx1.font = "20px Arial";
+    ctx1.fillStyle = 'white';
+    ctx1.strokeStyle = 'black';
+    ctx1.textAlign = 'left';
+    ctx1.textBaseline = 'top';
+
+    const end = Date.now();
+    const time = `draw took ${~~(end-start)} ms`;
+    ctx1.strokeText(time, 20, 20);
+    ctx1.fillText(time, 20, 20);
+
+    const timeDiff = `frame took ${~~tickDiff} ms`
+    ctx1.strokeText(timeDiff, 20, 50);
+    ctx1.fillText(timeDiff, 20, 50);
+
+    const fps = `frames per second ${~~(1000/tickDiff)}`
+    ctx1.strokeText(fps, 20, 80);
+    ctx1.fillText(fps, 20, 80);
   }
 };
 
-
+let lastTick = 0;
 const loop = (tick) => {
+  const tickDiff = tick - lastTick;
+  lastTick = tick;
   update(tick);
-  draw(tick);
+  draw(tick, tickDiff);
   requestAnimationFrame(loop);
 };
 
 const stopVideo = () => {
   if (video) {
-    mediaStream.getTracks()[0].stop();
+    mediaStream.getTracks().forEach(track => track.stop());
     mediaStream = null;
     video.src = '';
     btnStartVideo.disabled = false;
@@ -125,18 +162,19 @@ const stopVideo = () => {
 };
 
 const startVideo = () => {
-  if (hasGetUserMedia()) {
-    const getMedia = getUserMediaMethod().bind(navigator);
-    const success = (localMediaStream) => {
-      video.src = window.URL.createObjectURL(localMediaStream);
+  navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+    .then(stream => {
+      video.src = window.URL.createObjectURL(stream);
       video.onloadedmetadata = (e) => {
-        mediaStream = localMediaStream;
+        mediaStream = stream;
+        console.log('videoWidth: ', video.videoWidth);
+        console.log('videoHeight: ', video.videoHeight);
       };
-    };
-    getMedia({ video: true }, success, console.error);
-    btnStartVideo.disabled = true;
-    btnStopVideo.disabled = false;
-  }
+      video.play();
+      btnStartVideo.disabled = true;
+      btnStopVideo.disabled = false;
+    })
+    .catch(console.error);
 };
 
 const onBlockSizeChange = (e) => { blockSize = parseInt(e.target.value, DECIMAL_RADIX); };
@@ -151,7 +189,7 @@ const init = () => {
     alert('getUserMedia() is not supported in your browser');
   }
   rangeBlockSize.addEventListener('change', onBlockSizeChange);
-
+  // setup events to track active dragging on the range input
   rangeBlockSize.addEventListener('mouseup', () => { isMouseDown = false; });
   rangeBlockSize.addEventListener('mousedown', () => { isMouseDown = true; });
   rangeBlockSize.addEventListener('mousemove', (e) => {
@@ -162,104 +200,3 @@ const init = () => {
 };
 init();
 
-
-// obtained from https://en.wikipedia.org/wiki/Courier_(typeface)
-const darknessCourier = {
-  'a': 21,
-  'b': 25,
-  'c': 18,
-  'd': 25,
-  'e': 24,
-  'f': 19,
-  'g': 28,
-  'h': 24,
-  'i': 14,
-  'j': 15,
-  'k': 25,
-  'l': 16,
-  'm': 30,
-  'n': 21,
-  'o': 20,
-  'p': 27,
-  'q': 27,
-  'r': 18,
-  's': 21,
-  't': 17,
-  'u': 19,
-  'v': 17,
-  'w': 25,
-  'x': 20,
-  'y': 21,
-  'z': 21,
-
-  'A': 25,
-  'B': 29,
-  'C': 21,
-  'D': 26,
-  'E': 29,
-  'F': 25,
-  'G': 27,
-  'H': 31,
-  'I': 18,
-  'J': 19,
-  'K': 28,
-  'L': 20,
-  'M': 36,
-  'N': 24,
-  'O': 20,
-  'P': 25,
-  'Q': 28,
-  'R': 30,
-  'S': 28,
-  'T': 24,
-  'U': 27,
-  'V': 22,
-  'W': 30,
-  'X': 26,
-  'Y': 23,
-  'Z': 24,
-
-  '`': 02,
-  '1': 16,
-  '2': 19,
-  '3': 20,
-  '4': 23,
-  '5': 23,
-  '6': 23,
-  '7': 16,
-  '8': 26,
-  '9': 23,
-  '0': 24,
-  '-': 06,
-  '=': 12,
-  '~': 09,
-  '!': 09,
-  '@': 36,
-  '#': 30,
-  '$': 26,
-  '%': 20,
-  '^': 07,
-  '&': 24,
-  '*': 21,
-  '(': 13,
-  ')': 13,
-  '_': 09,
-  '+': 13,
-
-  '[': 17,
-  ']': 17,
-  '\\': 08,
-  ';': 11,
-  '\'': 04,
-  ',': 07,
-  '.': 04,
-  '/': 08,
-  '{': 16,
-  '}': 16,
-  '|': 13,
-  ':': 08,
-  '"': 08,
-  '<': 09,
-  '>': 09,
-  '?': 13,
-};
